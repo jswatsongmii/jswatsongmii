@@ -1,0 +1,1861 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"  xmlns:v="urn:schemas-microsoft-com:vml">
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8"/>
+    <title>The Optimator: a Google Maps JavaScript API program to optimize travel to BJCP sanctioned beer competitions</title>
+ <script src="http://maps.google.com/maps?file=api&amp;v=2&amp;sensor=true_or_false&amp;key=ABQIAAAAuNys-YDZB6q30nMue-Hf2hQd_NM8oUUJzAfOfx4pbtj4hgoCsRS_UqIuMLfKEQj_LMtqSL_x4_pygg&sensor=false" type="text/javascript">
+    </script>
+
+    <style type="text/css">
+
+      body {
+        font-family: Verdana, Arial, sans serif;
+        font-size: 11px;
+        margin: 2px;
+      }
+
+      table.directions th {
+	background-color:#EEEEEE;
+      }
+	  
+      img {
+        color: #000000;
+      }
+
+    </style>
+
+    
+<script type="text/javascript">
+
+function testIt() {
+   writeLine("Start testIt");
+   var PrimordialBootloader = window.PrimordialBootloader || 
+         { loaded : [], done : function( names) { PrimordialBootloader.loaded.push(names); } }; 
+   var Bootloader = window.Bootloader || { done : PrimordialBootloader.done };
+
+   document.cookie = "cavalry_transit_start_time=; expires=Mon, 26 Jul 1997 05:00:00 GMT; path=\/; domain=.facebook.com";
+   writeLine("end testIt");
+}
+
+/* 
+ * Start New Elements
+ */
+
+var Start;
+var Home;
+
+var browserName;
+
+// Changes at times:
+
+var startLocation = 'Antioch, CA';
+var startDate = '3/24/2018';
+var startLocMark;
+
+var homeLocation = 'Antioch, CA';
+var homeDate = '4/29/2018';
+var error = -99;
+var endLocMark;
+
+//  Change at times:
+//
+var fudgeFactor = 1.0;
+var milesPerGallon = 20.0;   // approximately for my 2002 Ford Ranger
+var costPerGallonOfGasoline = 3.50; // As of 3/24/2018
+var maxHoursDrivingPerDay = 4.0; // initially only allow 2 hours driving average per day
+var maxDrivingRate = 1609.344*(60.0*maxHoursDrivingPerDay);
+
+//
+// If Next Event N is to far to get to from current Event C
+// in the time allowed, then skip it.
+//  Initailly set to a maximum travel time of 2 hours a day at 60  mile per hour.
+//  Which is 120 miles 
+//  which is (386242.56)/2 = 193121 meters per day.
+// 
+
+
+//
+// Set eventcout to number of events ... since the event array etest starts at zero, 
+// the eventcount is one plus the max etest array number
+//
+
+var EVENTCOUNT = 10
+
+var e = new Array(EVENTCOUNT);
+
+etest = new Array(EVENTCOUNT);
+
+// New Event etest data here:	(only using first 10 to start up ... after 8 years ...)
+																																																																																																																																																																												
+etest[	0	] = {"location":"	Riverside, CA	", "date":"	03/31/2018	", "name":"	BeerMe BrewCup	", "contact":"	Contact: Micheal Malsed	", "phone":"	Phone:   (909) 575-8074	", "weighting":80};
+etest[	1	] = {"location":"	Wilmington, NC	", "date":"	03/31/2018	", "name":"	2nd Annual Port City Plunder Homebrew Competition	", "contact":"	Contact: Hunter Oates	", "phone":"	Phone:   (770) 540-9370	", "weighting":80};
+etest[	2	] = {"location":"	Barrie, ON	", "date":"	04/02/2018	", "name":"	BARNSTORMER BREWING AND DISTILLING 2018 HOMEBREW PRO-AM COMPETITION	", "contact":"	Contact: Dustin Norlund	", "phone":"	Phone:   7054811701	", "weighting":80};
+etest[	3	] = {"location":"	San Diego, CA	", "date":"	04/06/2018	", "name":"	2018 AHA National Homebrew Competition First Round - San Diego, CA	", "contact":"	Contact: Joaquin Quiroz	", "phone":"	Phone:   (760) 390-0603	", "weighting":80};
+etest[	4	] = {"location":"	Portland, OR	", "date":"	04/06/2018	", "name":"	2018 AHA National Homebrew Competition First Round - Portland, OR	", "contact":"	Contact: Jim Thompson	", "phone":"	Phone:   (818) 636-2150	", "weighting":80};
+etest[	5	] = {"location":"	Montegomery, PA	", "date":"	04/06/2018	", "name":"	2018 AHA National Homebrew Competition First Round - Philadelphia, PA	", "contact":"	Contact: Brian Pylant	", "phone":"	Phone:   (856) 663-1967	", "weighting":80};
+etest[	6	] = {"location":"	Long Island City, NY	", "date":"	04/06/2018	", "name":"	2018 AHA National Homebrew Competition First Round - New York, NY	", "contact":"	Contact: Chris Cuzme	", "phone":"	Phone:   (917) 803-8566	", "weighting":80};
+etest[	7	] = {"location":"	Longmont, CO	", "date":"	04/06/2018	", "name":"	2018 AHA National Homebrew Competition First Round - Denver, CO	", "contact":"	Contact: Don Blake	", "phone":"	Phone:   (303) 828-4678	", "weighting":80};
+etest[	8	] = {"location":"	milton, GA	", "date":"	04/07/2018	", "name":"	Big South Beer Competition and Festival	", "contact":"	Contact: charles squires	", "phone":"	Phone:   (954) 547-9377	", "weighting":80};
+etest[	9	] = {"location":"	Valmeyer, IL	", "date":"	04/07/2018	", "name":"	Columbia Trails Homebrew Competition	", "contact":"	Contact: Jared Myers	", "phone":"	Phone:   (618) 792-1490	", "weighting":80};
+																																																																																																																																																																																																			
+
+
+/*
+ * After first run with new Event Date in above matrix, copy the new resulting DISTANCEMATRX and LIST
+ * into the location below, to save time on next run.
+ */
+
+
+
+var DISTANCEMATRIXSIZE = 0
+distanceMatrix  = new Array(DISTANCEMATRIXSIZE);
+
+// New Distance array here after first run
+
+
+var eventLocations = new Array(EVENTCOUNT);
+var eventDates = new Array(EVENTCOUNT);
+var eventName = new Array(EVENTCOUNT);
+var eventWeighting = new Array(EVENTCOUNT);
+var eventOrigDataIndexLoc = new Array(EVENTCOUNT);
+
+//
+// New Events Entered here.
+//
+
+var NewNUMEVENTS = 0;
+
+// var newEventLocation = new Array();
+// var newEventDate = new Array();
+
+var S;
+var H;
+
+/*
+ * End New Elements
+ */
+
+var doneCalculatingMatrix = false;
+
+
+String.prototype.trim = function()
+{
+  return this.replace(/^\s+/,'').replace(/\s+$/,'');
+}
+
+
+
+function printEventMatrix() {
+    writeMatrix("\nvar eventLocations = new Array(\n");
+
+    for (var i = 0; i < eventLocations.length-1; i++) {
+        writeMatrix("   '" + eventLocations[i] + "',\n");
+        }
+    writeMatrix("   '" + eventLocations[eventLocations.length-1] + "');\n");
+
+    writeMatrix("\nvar eventDates = new Array(\n");
+
+   for (var i = 0; i < eventDates.length-1; i++) {
+        writeMatrix("   '" + eventDates[i] + "',\n");
+        }
+    writeMatrix("   '" +eventDates[eventDates.length-1] + "');\n\n");
+   }
+
+
+function deleteElementFromDistanceMaxtrix() {  /* if googlemaps looses ability to find route to a certain city, 
+                                                  like Juneau, AK on 10/21/2009 became unusible for  some  reason,
+                                                  then we must remove that city from the Distance Maxtrix and Index */
+  
+  writeLine("deleteElementFromDistanceMaxtrix");
+  var removeElementDistanceMaxtrix = 79;
+
+  distanceMatrixLocationList.splice(removeElementDistanceMaxtrix, 1 )
+
+  for (var i = 0; i < distanceMatrix.length; i++) 
+      distanceMatrix[i].splice(removeElementDistanceMaxtrix, 1 );
+
+  distanceMatrix.splice(removeElementDistanceMaxtrix, 1 ); 
+  printNewData= true;
+  }
+
+
+var printNewData = false;
+
+function printDistanceMatrix() {
+
+    if ( !printNewData ) return;  /* if distance matrix has not change, don't print it out */
+
+    writeMatrix("var DISTANCEMATRIXSIZE = " + distanceMatrix.length+ "\n");  
+
+   writeMatrix("distanceMatrix  = new Array(DISTANCEMATRIXSIZE);\n");
+   for (var i = 0; i < distanceMatrix.length; i++) {
+       writeMatrix("distanceMatrix["+i+"] = new Array( ");
+       for (var j = 0; j < distanceMatrix.length; j++) {
+           if ( j < distanceMatrix.length-1) {
+              writeMatrix( distanceMatrix[i][j] + ", ");
+              }
+              else
+              writeMatrix( distanceMatrix[i][j] + ");\n")
+           }
+       }
+
+     writeMatrix("\nvar distanceMatrixLocationList = new Array(DISTANCEMATRIXSIZE)\n");
+
+    for ( var i = 0; i < distanceMatrixLocationList.length; i++) {
+         if ( distanceMatrixLocationList[i].lat != undefined) 
+            writeMatrix("distanceMatrixLocationList[" + i + "] = {'locationName':'" 
+                       + distanceMatrixLocationList[i].locationName.toLowerCase() 
+                       + "', lat: '"
+                       + distanceMatrixLocationList[i].lat
+                       + "', lng: '"
+                       + distanceMatrixLocationList[i].lng
+                       + "'};\n");
+          else 
+            writeMatrix("distanceMatrixLocationList[" + i + "] = {'locationName':'" 
+                       + distanceMatrixLocationList[i].locationName.toLowerCase() 
+                       + "'};\n");
+        }
+   }
+
+function checkEventDates() {  // check each event date to see if it is more than 50 years old
+                              // and if it is, add 100 years.
+  var dateTest;
+
+  for ( var i = 0; i < etest.length; i++ ) {
+      dateTest = new Date( etest[i].date );
+
+      if ( dateTest.valueOf() < 0) {
+         writeLine("WARNING!!! NEGATIVE DATE VALUE ENCOUNTERED ON EVENT "+ etest[i].name.toUpperCase() + " AT " 
+                     + etest[i].location.toUpperCase() +" ON "+ etest[i].date);
+         writeLine("CHECK TO MAKE SURE EVENT DATES ARE ENTERED IN THE FORM MM/DD/YYYY");
+         writeLine("SOME OLDER VERSION OF JAVASCRIPT INTERPRET DATES OF THE FORM MM/DD/YY");
+         writeLine("AS BEING OF THE FORM 19YY");
+        }
+      }
+  }
+
+
+function deleteEventsOutsideStartEndDate() {
+     var eMatLength;
+     var beginDate;
+     var beginDateValue;
+     var endDate;
+     var endDateValue;
+     var eventDate;
+     var eventDateValue;
+
+     var beginEventIndex = 0;
+     var endEventIndex = 0;
+     var eventIndex = 0;
+
+     writeLine("***** Deleting Events that can't get to in time *****");
+
+     // Delete events that are before the start day:
+   
+     beginDate = new Date( startDate);
+     beginDateValue = beginDate.valueOf();
+
+     eventDate = new Date( eventDates[eventIndex] );
+     eventDateValue = eventDate.valueOf();
+     while ( eventDateValue < beginDateValue ) {
+           // writeLine("Event(s) before " +startDate + ": " + eventLocations[0] + " on day " + eventDates[0] + ".");
+           eventLocations.splice( 0, 1);
+           eventDates.splice( 0, 1);
+           eventWeighting.splice( 0, 1);
+           eventName.splice( 0, 1);
+           eventOrigDataIndexLoc.splice( 0, 1);
+
+           eventDate = new Date( eventDates[0]);
+           eventDateValue = eventDate.valueOf();
+           }
+
+    // Delete Events to Close to Start Date that would be to far to get to by driving N hours a day:
+    // needs fixing because some are slipping through ...
+
+     beginDate = new Date( startDate);
+     beginDateValue = beginDate.valueOf();
+
+     for ( var i = 0; i < eventLocations.length; i++ ) {
+
+         eventDate = new Date( eventDates[i]);
+         eventDateValue = eventDate.valueOf();
+
+         if ( eventMoreThanFourHoursPerDayAway( eventDateValue, beginDateValue, 
+                                                eventLocations[i], startLocation)) {
+             eventLocations.splice( i, 1);
+             eventDates.splice( i, 1);
+             eventWeighting.splice( i, 1);
+             eventName.splice( i, 1);
+             eventOrigDataIndexLoc.splice( i, 1);
+
+             i--;
+             }
+         }
+
+   // Delete on End
+
+   endDate = new Date( homeDate);
+   endDateValue = endDate.valueOf();
+ 
+   eMatLength = eventLocations.length;
+   eventDate = new Date( eventDates[eMatLength -1]);
+   eventDateValue = eventDate.valueOf();
+
+   while ( endDateValue < eventDateValue ) {
+
+           
+           eventLocations.splice( eMatLength -1, 1);
+           eventDates.splice( eMatLength -1, 1);
+           eventWeighting.splice( eMatLength -1, 1);
+           eventName.splice( eMatLength -1, 1);
+           eventOrigDataIndexLoc.splice( eMatLength -1, 1);
+
+           eMatLength = eventLocations.length;
+           eventDate = new Date( eventDates[eMatLength -1]);
+           eventDateValue = eventDate.valueOf();
+         }
+
+   // Delete Events to Close to End Date that would be to far to get to by driving 4 hours a day:
+
+   endDate = new Date( homeDate);
+   endDateValue = endDate.valueOf();
+
+   for (var i = 0; i < eventLocations.length; i++) {
+       eventDate = new Date( eventDates[i]);
+       eventDateValue = eventDate.valueOf();
+       if  ( eventMoreThanFourHoursPerDayAway( eventDateValue, endDateValue,
+                                               eventLocations[i], homeLocation) ) {
+           eventLocations.splice( i, 1);
+           eventDates.splice( i, 1);
+           eventWeighting.splice( i, 1);
+           eventName.splice( i, 1);
+           eventOrigDataIndexLoc.splice( i, 1);
+
+           i--;
+           }
+       }
+   }
+
+function cleanUpData() {
+   var temptime;
+
+   for ( var i = 0; i < EVENTCOUNT; i++) {
+       etest[i].location = etest[i].location.trim();
+       etest[i].location = etest[i].location.toLowerCase();  // We want all Locations in lower case (internally)
+       etest[i].date = etest[i].date.trim();
+       etest[i].name = etest[i].name.trim();
+       temptime = new Date(etest[i].date);
+       etest[i].time = temptime.valueOf();
+       }
+   etest.sort( sortByTime);
+   }
+
+function buildInitialEventList() {  /* re-arrage data ... original proto-type used these arrays and
+                                       it is easier to recopy them there than to re-write the rest of
+                                       the program */
+   cleanUpData();
+
+   for ( var i = 0; i < EVENTCOUNT; i++) {
+       eventLocations[i] = etest[i].location.trim();
+       eventDates[i] = etest[i].date.trim();
+       eventName[i] = etest[i].name.trim();
+       eventWeighting[i] = etest[i].weighting;
+       eventOrigDataIndexLoc[i] = i;
+       }
+   }
+
+
+function newEventLocationAlreadyExists( newEventLocation) {
+   var eventLocationExists = false;
+
+   for ( var i = 0; i < distanceMatrixLocationList.length; i++)
+       if ( distanceMatrixLocationList[i].locationName == newEventLocation )
+          eventLocationExists = true;
+
+   return eventLocationExists;
+   }
+
+
+function initializeMatrixes() {
+
+  var k = 0; 
+  var tempStartObject;
+  var tempHomeObject;
+
+  for (var j = 0; j < eventLocations.length; j++ ) 
+      if ( !newEventLocationAlreadyExists( eventLocations[j] ) ) {
+
+         for ( var i = 0; i < distanceMatrix.length; i++)
+             distanceMatrix[i].splice(k, 0, -2);
+
+         distanceMatrix.splice(k, 0, new Array(distanceMatrix.length+1)); 
+         for (var i = 0; i < distanceMatrix.length; i++)
+             distanceMatrix[k][i] = -2.0;
+
+         writeLine("Inserting: " + eventLocations[j] + " into distanceMatrixLocationList j= " + j + "\n");
+
+         distanceMatrixLocationList.splice( 0, 0, new Object() ); /* insert new location name */ 
+         distanceMatrixLocationList[0].locationName = eventLocations[j];
+         
+         for (var i = 0; i < etest.length; i++)
+             if ( ( etest[i].location.trim().toLowerCase() == eventLocations[j] )
+                  && ( etest[i].date.trim() == eventDates[j] ) ) {
+                distanceMatrixLocationList[0].lat = etest[i].point.lat();
+                distanceMatrixLocationList[0].lng = etest[i].point.lng();
+                }
+         }
+
+   /* Insert Distances to Start and Home location(s) if required */
+
+   if ( !newEventLocationAlreadyExists( startLocation ) ) {
+      writeLine("New Start Location: " + startLocation);
+
+      for ( var i = 0; i < distanceMatrix.length; i++)
+          distanceMatrix[i].splice(k, 0, -2);
+
+      distanceMatrix.splice(k, 0, new Array(distanceMatrix.length+1)); 
+      for (var i = 0; i < distanceMatrix.length; i++)
+          distanceMatrix[k][i] = -2.0;
+
+      tempStartObject = new Object();
+      tempStartObject.locationName = startLocation;
+      distanceMatrixLocationList.splice( 0, 0, tempStartObject ); /* insert start location name */
+      }
+
+   if ( !newEventLocationAlreadyExists( homeLocation ) ) {
+      writeLine("New Home  Location: " + homeLocation );
+
+      for ( var i = 0; i < distanceMatrix.length; i++)
+          distanceMatrix[i].splice(k, 0, -2);
+
+      distanceMatrix.splice(k, 0, new Array(distanceMatrix.length+1)); 
+      for (var i = 0; i < distanceMatrix.length; i++)
+          distanceMatrix[k][i] = -2.0;
+
+      tempHomeObject = new Object();
+      tempHomeObject.locationName = homeLocation;
+      distanceMatrixLocationList.splice( 0, 0, tempHomeObject); /* insert start location name */ 
+      }
+
+  doneCalculatingMatrix = false;  
+  }
+
+
+/*
+ * Begin core Optimator Engine
+ */
+
+function findDistanceMatrixIndex( eventLocationString) {
+   for ( var i = 0; i < distanceMatrixLocationList.length; i++)
+       if ( eventLocationString == distanceMatrixLocationList[i].locationName ) break;
+   
+   if ( i >= distanceMatrixLocationList.length) return -99;
+
+   return i;
+   }
+
+function sortByTime( a, b) {
+   var x = a.time;
+   var y = b.time;
+   return ((x<y) ? -1: ((x > y) ? 1 : 0));
+   }
+
+
+function constructEventObjectList() {
+  var tempdate;
+
+  for (var i = 0; i < eventLocations.length; i++ ) {
+
+      if ( etest[i].byPass == "yes") 
+         writeLine("ConstructEventObjectList: " + etest[i].location + " is to be bypassed.");
+
+      e[i] = new Object();
+      e[i].eventLocation = eventLocations[i];
+      e[i].dateString = eventDates[i];
+      e[i].distanceMatrixIndex = findDistanceMatrixIndex( eventLocations[i] );
+           
+      tempdate = new Date( e[i].dateString );
+      e[i].date = tempdate.valueOf();
+      e[i].nextEvent = -1;
+
+      e[i].optimalProfitOrLoss = -Infinity;
+      e[i].totalValue = 0.0;
+      e[i].totalDistance = 0.0;
+      e[i].name = eventName[i];
+      e[i].value = eventWeighting[i];
+      e[i].touched = false;
+      e[i].set = false;
+      e[i].thisfar = false;
+      e[i].dataIndex = eventOrigDataIndexLoc[i];
+      }
+  }
+
+
+function getTime(type, i) {
+   var t = 0;
+
+   if ( type == 'E') t = e[i].date - S.date;
+   if ( type == 'H') t = H.date - S.date;
+   if ( type == 'S') t = 0.0;
+  
+   return t;
+   }
+
+
+function getDistanceMatrixValue(i, j) {
+  var d;
+  
+  if ( i >= distanceMatrix.length)
+     return error;
+
+  if ( j >= distanceMatrix.length) 
+     return error;
+     
+  d = distanceMatrix[i][j];
+
+  return d;
+  }
+ 
+ 
+function setHome() {
+   var tempdate;
+
+   H = new Object();
+   H.eventLocation = homeLocation;
+   H.dateString = homeDate;
+   H.distanceMatrixIndex = findDistanceMatrixIndex( homeLocation);
+   
+   tempdate = new Date( homeDate);
+   H.date = tempdate.valueOf();
+   H.nextEvent = 0;
+   H.totalValue = 0.0;
+   H.totalDistance = 0.0;
+   H.optimalProfitOrLoss = -Infinity;
+   H.dataIndex = -1;
+   }
+
+ 
+function setStart() {
+   var tempdate;
+
+   S = new Object();
+   S.eventLocation = startLocation;
+   S.dateString = startDate;
+
+   S.distanceMatrixIndex = findDistanceMatrixIndex(startLocation);
+
+   tempdate = new Date(startDate);
+   S.date = tempdate.valueOf();
+   S.nextEvent = 0;
+   S.value = 0.0;
+   S.totalValue = 0.0;
+   S.totalDistance = 0.0;
+   S.optimalProfitOrLoss = -Infinity;
+   S.dataIndex = -1;
+   }
+
+//
+// If Next Event N is to far to get to from current Event C
+// in the time allowed, then skip it.
+//  Initailly set to a maximum travel time of 4 hours a day at 60  mile per hour.
+//  Which is 240 miles 
+//  which is 386242.56 meters per day.
+// 
+
+function nextEventToFarForTime( C, N) {
+   var dist = 0.0;
+   var msec = 0.0;
+   var rate = 0.0;
+   var time1; 
+   var time2;
+   var t;
+   
+   dist = getDistanceMatrixValue( C.distanceMatrixIndex, N.distanceMatrixIndex);
+   if ( dist == error) {
+      writeLine("Error: from getDistanceMatrixValue in nextEventToFarForTime");
+      return error;
+      }
+
+   t = C.date - N.date;
+   if ( t < 0) 
+      t = N.date - C.date;
+   
+   rate = 86400000*(dist/t);
+
+   if ( rate > maxDrivingRate) {
+      return true;
+      }
+    else
+      return false;
+   }
+
+
+function eventMoreThanFourHoursPerDayAway( Cedv, Nbdv, Cname, Nname) {
+   var dist = 0.0;
+   var msec = 0.0;
+   var rate = 0.0;
+   var time1; 
+   var time2;
+   var t;
+   
+   dist = getDistanceMatrixValue( findDistanceMatrixIndex(Cname), findDistanceMatrixIndex(Nname) );
+   if ( dist == error ) {
+      writeLine("Error: Cedv = " + Cedv + ", Nbdv = " + Nbdv + 
+                 ", findDistanceMatrixIndex(Cname) = " + findDistanceMatrixIndex(Cname) +
+                 ", findDistanceMatrixIndex(Nname) = " + findDistanceMatrixIndex(Nname) );
+      return false;
+      }
+
+   t = Cedv - Nbdv;
+   if ( t < 0) 
+      t = Nbdv - Cedv;
+   
+   rate = 86400000*(dist/t);
+
+   if ( rate > maxDrivingRate)
+      return true;
+    else
+      return false;
+   }
+
+
+function determineProfitOrLoss( totalDistanceInMeters, totalValue) {
+   
+   var costOfTravel;
+   var totalGallonsGasoline;
+   var valueEarned;
+
+   totalGallonsGasoline = (totalDistanceInMeters/1609.344)/milesPerGallon; // 1 mile is 1,609.344 meters
+   costOfTravel = totalGallonsGasoline*costPerGallonOfGasoline;
+
+   valueEarned = totalValue*fudgeFactor; // fudgeFactor may or may not matter: start with 1.0
+                                      // trying to determine a dollar value of attending event
+   profitOrLoss = valueEarned - costOfTravel;
+   
+   return profitOrLoss;
+   }
+
+
+function setNextOptimalEventForEachEvent( E, j) {
+   var elen;
+   var tempProfitOrLoss = -Infinity;
+
+
+   elen = eventLocations.length;
+   E.nextEvent = -1;
+   
+   for ( var i = elen - 1; i >= j; i--) {          
+       if ( E.date < e[i].date ) {
+          distance = getDistanceMatrixValue( E.distanceMatrixIndex, e[i].distanceMatrixIndex ); 
+          if ( distance == error)
+             writeLine("Error: from getDistanceMatrixValue in setNextOptimalEventForEachEvent");
+             
+          tempTotalValue = E.value + e[i].totalValue;
+          tempTotalDistance =  distance + e[i].totalDistance;
+          tempTotalTime = getTime('E', i);
+
+          E.touched = true;
+
+          if ( etest[ e[i].dataIndex ].byPass == "yes") 
+             tempProfitOrLoss = -Infinity;  // make events we don't want to attend very expensive
+           else
+             tempProfitOrLoss = determineProfitOrLoss( tempTotalDistance, tempTotalValue);
+
+          if ( tempProfitOrLoss >  E.optimalProfitOrLoss) {          
+             if ( !nextEventToFarForTime( E, e[i] ) ) { 
+                E.nextEvent = i;
+                E.totalValue = tempTotalValue;
+                E.totalDistance = tempTotalDistance;
+                E.optimalProfitOrLoss = tempProfitOrLoss;
+                E.set = true;
+                }
+             } 
+          }
+
+       distance = getDistanceMatrixValue( E.distanceMatrixIndex, H.distanceMatrixIndex);
+       if ( distance == error) {
+             writeLine("Error: from getDistanceMatrixValue in setNextOptimalEventForEachEvent");
+             }
+
+       tempTotalValue = E.value;
+       tempTotalDistance =  distance;
+       E.touched = true;
+
+       tempProfitOrLoss = determineProfitOrLoss( tempTotalDistance, tempTotalValue);
+       E.thisfar = true;
+
+       if ( tempProfitOrLoss > E.optimalProfitOrLoss ) {
+          E.nextEvent = -2;
+          E.totalValue = tempTotalValue;
+          E.totalDistance = tempTotalDistance;
+          E.optimalProfitOrLoss = tempProfitOrLoss;
+          E.set = true;
+          }
+       }
+   }
+
+
+function determineOptimalRouteFromStart(S) {
+
+    var tempProfitOrLoss = -Infinity;
+  
+    for ( var i = 0; i < eventLocations.length; i++) {
+
+        distance = getDistanceMatrixValue( e[i].distanceMatrixIndex, S.distanceMatrixIndex);
+        if ( distance == error)
+           writeLine("Error: from getDistanceMatrixValue in determineOptimalRouteFromStart");
+
+        tempTotalValue = e[i].totalValue;
+        tempTotalDistance =  distance + e[i].totalDistance;
+
+        if ( etest[ e[i].dataIndex ].byPass == "yes") 
+           tempProfitOrLoss = -Infinity;  // make events we don't want to attend very expensive
+         else
+           tempProfitOrLoss = determineProfitOrLoss( tempTotalDistance, tempTotalValue);
+
+        if ( tempProfitOrLoss >  S.optimalProfitOrLoss ) {
+           S.nextEvent = i;
+           S.totalValue = tempTotalValue;
+           S.totalDistance = tempTotalDistance;
+           S.optimalProfitOrLoss = tempProfitOrLoss;
+           }
+        }   
+   }
+
+
+function determineOptimalRoute() {
+   var startTime;
+   var endTime;
+   var valueStartTime;
+   var valueEndTime;
+   var eventTime;
+   startTime = new Date();
+   for ( var j = eventLocations.length-1; j >= 0; j--) {
+       
+       setNextOptimalEventForEachEvent( e[j], j);  
+       
+       
+       }
+
+   determineOptimalRouteFromStart(S);
+
+   endTime = new Date();
+   valueStartTime = startTime.valueOf();
+   valueEndTime = endTime.valueOf();
+   eventTime = valueEndTime - valueStartTime;
+   // writeLine("\nCalculation time for this run is " + eventTime + " milliseconds.\n");
+   }
+
+function listAnyNotSetOrTouched() {
+
+  for (var i = 0; i < eventLocations.length; i++) {
+      if ( !e[i].touched) 
+          writeMessage("Not Touched: Event[" + i +  "]@"+ e[i].eventLocation +" on date: " + e[i].dateString + "  nextEvent is Event" + e[i].nextEvent + "\n");
+      if ( !e[i].set) 
+          writeMessage("Not set: Event[" + i +  "]@"+ e[i].eventLocation +" on date: " + e[i].dateString + "  nextEvent is Event" + e[i].nextEvent + "\n");
+      if ( !e[i].thisfar) 
+          writeMessage("Not this far: Event[" + i +  "]@"+ e[i].eventLocation +" on date: " + e[i].dateString + "  nextEvent is Event" + e[i].nextEvent + "\n");
+      }
+}
+
+
+function dumpAllEvents() {
+
+  writeMessage("*** dumpAllEvents *** \n");
+  d = new Date(startDate);
+  writeMessage("Today is " + d.toLocaleString() + "\n");
+  writeMessage("Today is in ms is " + d.valueOf() + "\n");
+
+  for (var i = 0; i < eventLocations.length; i++) {
+      writeMessage("From Event[" + i +  "]@"+ e[i].eventLocation +" on date: " + e[i].dateString + "  nextEvent is Event" + e[i].nextEvent + "\n");
+      }
+   }
+
+function markOptimalRouteStatus() {
+  var eventNum;
+  var ne;
+
+  ne = S.nextEvent;
+  etest[e[ne].dataIndex].status = 1;
+  while ( e[ne].nextEvent >= 0 ) {
+         ne = e[ne].nextEvent;
+         etest[e[ne].dataIndex].status = 1;
+         }
+}
+
+
+function listOptimalRoute() {
+   var string;
+   var nE;
+   var currentEvent;
+   var miles = 0;
+   var Ce;
+   var totalCostinGas ;
+   var numberOfDays = 0.0;
+   var averageMilesPerDay =0.0;
+
+   writeMessage("\n******************************** START SUGGESTED OPTIMAL ROUTE ********************************\n\n");
+
+   writeMessage("Total distance is " + Math.round(S.totalDistance/1609.344) + " miles." + lineFeed);
+  
+   writeMessage("Total Profit (or Loss) = $" + Math.round(S.optimalProfitOrLoss*100)/100 + lineFeed);
+
+   totalCostinGas = costPerGallonOfGasoline*(Math.round(S.totalDistance/1609.344)/milesPerGallon);
+
+   writeMessage("Total cost is of gas is $" + Math.round(totalCostinGas) + " in dollars." + lineFeed);
+   writeMessage("Value is determined by giving competitions $" + fudgeFactor + " per entry (fudge factor)." + lineFeed + lineFeed);
+
+
+   writeMessage("... START from " + S.eventLocation.toUpperCase() + " on " + S.dateString + "," + lineFeed);
+
+   ne = S.nextEvent;
+   miles = getDistanceMatrixValue( S.distanceMatrixIndex, e[ne].distanceMatrixIndex)/1609.344;
+   if ( distance == error) {
+      writeLine("Error: from getDistanceMatrixValue in listOptimalRoute");
+      }
+
+   numberOfDays = (e[ne].date- S.date)/(1000*60*60*24);
+   averageMilesPerDay = miles/numberOfDays;
+   writeMessage("drive " + Math.round(miles) + " miles (" 
+             + Math.round(numberOfDays*10)/10 + " days @" + Math.round(averageMilesPerDay*10)/10 + " miles/day)" + lineFeed);
+ 
+   while ( e[ne].nextEvent >= 0 ) {
+         writeMessage("   to get to the " + e[ne].name.toUpperCase() 
+                        + " (expect about " + e[ne].value + " beers)"
+                        + lineFeed + "   in " 
+                        + e[ne].eventLocation.toUpperCase() + " on " + e[ne].dateString + ", ..." + lineFeed);
+         Ce = e[ne];
+         ne = e[ne].nextEvent;
+         
+         miles = getDistanceMatrixValue( Ce.distanceMatrixIndex, e[ne].distanceMatrixIndex)/1609.344;
+         if ( distance == error) {
+           writeLine("Error: from getDistanceMatrixValue in listOptimalRoute");
+            }
+
+         numberOfDays = (e[ne].date - Ce.date)/86400000.0;
+
+         averageMilesPerDay = miles/numberOfDays;
+
+         writeMessage("THEN drive " + Math.round(miles) + " miles (in "
+                       + Math.round(numberOfDays*10)/10 + " days @" + Math.round(averageMilesPerDay*10)/10 + " miles/day)" + lineFeed);
+         }
+
+   writeMessage("to get to " + e[ne].name.toUpperCase() 
+               + " (expect about " + e[ne].value + " beers)"
+               +"\n in " + e[ne].eventLocation.toUpperCase() 
+               + " on " + e[ne].dateString  + "," + lineFeed);
+
+   miles = getDistanceMatrixValue( H.distanceMatrixIndex, e[ne].distanceMatrixIndex)/1609.344;
+   if ( distance == error)
+      writeLine("Error: from getDistanceMatrixValue in listOptimalRoute");
+      
+
+   numberOfDays = (H.date - e[ne].date)/(1000*60*60*24);
+   averageMilesPerDay = miles/numberOfDays;
+   writeMessage("lastly drive " + Math.round(miles)+ " to get home to " + H.eventLocation.toUpperCase() + " on " + H.dateString + lineFeed + "(in "
+               + Math.round(numberOfDays*10)/10 + " days @" + Math.round(averageMilesPerDay*10)/10 + " miles/day).   " + lineFeed);
+
+   writeMessage("********************************  END SUGGESTED OPTIMAL ROUTE ********************************"+ lineFeed);
+
+  }
+
+/*
+ * End core Optimator Engine
+ */
+
+
+var fromto;
+var map;
+var gdir;
+var geocoder = null;
+var addressMarker;
+var status;
+var locindex = 0;
+var toLocIndex = 0;
+var fromLocIndex = 0;
+var lineFeed;
+    
+    
+function setDirections( fromAddress, toAddress, locale) {
+      fromto = "from: " + fromAddress + " to: " + toAddress;
+      gdir.load("from: " + fromAddress + " to: " + toAddress,
+                { "locale": locale });
+      }
+
+function initialize() {
+
+     var today;
+     var day, month, year;
+     var eventDate;
+     var mostFutureEvent, mostFutureEventPlus2Months;
+     today = new Date();
+       
+     month = today.getMonth()+1;
+     day = today.getDate();
+     year = today.getFullYear();
+     
+     document.myform.sd.value  = month + "/" + day + "/" + year;
+ 
+     mostFutureEvent = today;
+
+
+
+     writeLine("Initializing: ");
+
+     testIt();
+
+     for (var i = 0; i < EVENTCOUNT; i++ ) {
+         eventDate = new Date( etest[i].date.trim() );
+         if ( eventDate > mostFutureEvent ) {
+            mostFutureEvent = eventDate;
+            }
+         etest[i].byPass = "no"; 
+         }
+
+     futureValue = mostFutureEvent.valueOf();
+
+     futureValue = futureValue + (2*31*24*60*60*1000); // add 2 months in microseconds to late event date
+     mostFutureEventPlus2Months = new Date( futureValue );
+     
+     month = mostFutureEventPlus2Months.getMonth()+1;
+     day = mostFutureEventPlus2Months.getDate();
+     year = mostFutureEventPlus2Months.getFullYear();
+
+     document.myform.ed.value  = month + "/" + day + "/" + year;
+
+    browserName = navigator.appName;
+
+    if ( browserName == "Microsoft Internet Explorer")
+       lineFeed = "\n\n";
+    else
+       lineFeed = "\n";
+
+
+    if ( GBrowserIsCompatible()) {      
+        map = new GMap2( document.getElementById("map_canvas"));
+        map.setCenter(new GLatLng(39.833333, -98.583333), 3);  
+
+        map.addControl(new GSmallMapControl());
+        map.addControl(new GMapTypeControl());
+
+        gdir = new GDirections( map, document.getElementById("directions"));
+
+        GEvent.addListener( gdir, "load", onGDirectionsLoad);
+        GEvent.addListener( gdir, "error", handleErrors);
+        
+        geocoder = new GClientGeocoder();
+
+        // See how "setCache" works, and if you can use it to store
+        // previously determined points.
+        // Need to store this information in distanceMatrixList at the 
+        // end of session, since names aren't in  that List here yet.
+
+        geocoder.setCache(null);
+
+        window.setTimeout( geocodeAll, 50);
+        } 
+      else
+        writeLine("GBrowserIsCompatible not compatible.");
+     }
+
+
+function handleErrors(){
+	   if ( gdir.getStatus().code == G_GEO_UNKNOWN_ADDRESS)
+	     alert("No corresponding geographic location could be found for one of the specified addresses. This may be due to the fact that the address is relatively new, or it may be incorrect.\nError code: " + gdir.getStatus().code);
+	   else if (gdir.getStatus().code == G_GEO_SERVER_ERROR)
+	     alert("A geocoding or directions request could not be successfully processed, yet the exact reason for the failure is not known.\n Error code: " + gdir.getStatus().code);
+	   
+	   else if (gdir.getStatus().code == G_GEO_MISSING_QUERY)
+	     alert("The HTTP q parameter was either missing or had no value. For geocoder requests, this means that an empty address was specified as input. For directions requests, this means that no query was specified in the input.\n Error code: " + gdir.getStatus().code);
+
+	//   else if (gdir.getStatus().code == G_UNAVAILABLE_ADDRESS)  <--- Doc bug... this is either not defined, or Doc is wrong
+	//     alert("The geocode for the given address or the route for the given directions query cannot be returned due to legal or contractual reasons.\n Error code: " + gdir.getStatus().code);
+	     
+	   else if (gdir.getStatus().code == G_GEO_BAD_KEY)
+	     alert("The given key is either invalid or does not match the domain for which it was given. \n Error code: " + gdir.getStatus().code);
+
+	   else if (gdir.getStatus().code == G_GEO_BAD_REQUEST)
+	     alert("A directions request could not be successfully parsed.\n Error code: " + gdir.getStatus().code);
+	    
+	   else alert("An unknown error occurred.");
+	   
+	}
+
+function writeMessage( message) {
+     temp  = document.getElementById("getDistance").innerHTML;
+     document.getElementById("getDistance").innerHTML = temp + message; 
+     }
+
+function writeLine( message) {
+   var test = document.getElementById("getDistance").innerHTML;
+   document.getElementById("getDistance").innerHTML = test + message + "\n";
+   }
+
+
+function mySetDirections() { 
+   
+   gdir.load("from: " 
+               + distanceMatrixLocationList[toLocIndex].locationName 
+               + " to: " 
+               + distanceMatrixLocationList[fromLocIndex].locationName, 
+                 "en_US");
+   }
+
+
+function redrawEventMarkers() {
+   for ( var i = 0; i < etest.length; i++) {
+       if ( etest[i].status == 1 ){  // status code 1 means an optimal event
+          etest[i].marker1.show();                               
+          etest[i].marker2.hide();
+          etest[i].marker3.hide();
+          etest[i].marker4.hide();
+          etest[i].marker0.hide();
+          }
+       if ( etest[i].status == 2) {  // status code 2 means not optimal, but do-able
+          etest[i].marker1.hide();
+          etest[i].marker2.show();
+          etest[i].marker3.hide();
+          etest[i].marker4.hide();
+          etest[i].marker0.hide();
+          }
+       if ( etest[i].status == 3 ) {  // status code 3 means outside of start/end date
+          etest[i].marker1.hide();    // if byPass is yes, then event will not be considered
+          etest[i].marker2.hide();
+          etest[i].marker3.show();
+          etest[i].marker4.hide();
+          etest[i].marker0.hide();
+          }
+       if ( etest[i].status == 4 ) {  // status code 4 means to close to start or end date to reach in time available
+          etest[i].marker1.hide();
+          etest[i].marker2.hide();      
+          etest[i].marker3.hide();
+          etest[i].marker4.show();
+          etest[i].marker0.hide();
+          }
+       if ( etest[i].status == 0 || etest[i].byPass == "yes") { // initialize to zero, on every run every event should have a non-zero status,
+                                    // so in theory, there should never be a zero status after a run in computed.
+          etest[i].marker1.hide();
+          etest[i].marker2.hide();
+          etest[i].marker3.hide();
+          etest[i].marker4.hide();
+          etest[i].marker0.show();
+          }
+      }
+   }
+
+
+var routeStringSeg = new Array();
+
+function setUpRouteSegments() {
+  
+  var displayRouteCount;
+
+  writeLine("start  setUpRouteSegments");
+
+   var ne;
+   var Ce;
+
+   displayRouteCount = 0;
+
+   Ce = S;
+   ne = S.nextEvent;
+
+   while ( e[ne].nextEvent >= 0 ) {       
+         routeStringSeg[displayRouteCount] = "from: " + Ce.eventLocation + " to: " + e[ne].eventLocation; 
+
+         writeLine( routeStringSeg[displayRouteCount] );
+         Ce = e[ne];
+         ne = e[ne].nextEvent;
+         displayRouteCount++;
+         }
+
+  routeStringSeg[displayRouteCount] = "from: " + Ce.eventLocation + " to: " + e[ne].eventLocation; 
+  
+  writeLine( routeStringSeg[displayRouteCount] );
+
+  displayRouteCount++;
+
+/*
+  routeStringSeg[displayRouteCount] = "from: " + e[ne].eventLocation + " to: " + H.eventLocation; 
+  writeLine( routeStringSeg[displayRouteCount] );
+
+  displayRouteCount++;
+ */
+
+  firstTimeSegmentBuild = false;
+
+
+  writeLine("end  setUpRouteSegments");
+
+  }
+
+
+var firstTimeSegmentBuild = true;
+
+var routeShown = false;
+
+function displayOptimalRoute() { // "DOR"
+  var string;
+  var nE;
+  var currentEvent;
+  var miles = 0;
+  var Ce;
+  var routeSting;
+  var  routeCount = 0;
+
+
+  if ( firstTimeSegmentBuild ) {
+     writeLine("loading setUpRouteSegments");
+
+     setUpRouteSegments();  // create and initialize the list of route segments, set displayRouteCount
+     firstTimeSegmentBuild = false;
+     }
+   else writeLine("setUpRouteSegments has been loaded");
+
+
+  routeString = "from: " + S.eventLocation ;
+
+  ne = S.nextEvent;
+
+  while ( e[ne].nextEvent >= 0 ) {       
+         routeString = routeString + " to: " + e[ne].eventLocation ;
+         Ce = e[ne];
+         ne = e[ne].nextEvent;
+         routeCount++;
+         }
+
+  routeString = routeString + " to: " + e[ne].eventLocation ;
+  routeString = routeString + " to: " + H.eventLocation ;
+
+  routeShown = true;  // set  flag to indicate call to "load" is made ...
+
+  // gdir.load( routeString, { "avoidHighways":true} );
+
+  writeLine("Number of steps in route = " + routeCount );
+  writeLine( routeString);
+  if ( routeCount > 20 ) 
+      writeLine("TO MANY ROUTE POINTS TO DISPLAY")
+    else   
+      gdir.load( routeString, "en_US");
+}
+
+
+var dblclickLocationIndex;
+
+function changeEventValues( en, we, t2, t3, radioValue) {
+
+   rB = radioButtonChecker();
+
+   if ( dblclickLocationIndex < etest.length ) {
+      writeLine("Changing " + etest[dblclickLocationIndex].name + " from weight " 
+                + etest[dblclickLocationIndex].weighting + " to " + we);
+      
+      etest[dblclickLocationIndex].weighting = parseFloat(we);
+
+      etest[dblclickLocationIndex].marker0.remove();
+      etest[dblclickLocationIndex].marker1.remove();
+      etest[dblclickLocationIndex].marker2.remove();
+      etest[dblclickLocationIndex].marker3.remove();
+      etest[dblclickLocationIndex].marker4.remove();
+
+      etest[dblclickLocationIndex].infoString =      
+                          etest[dblclickLocationIndex].name.trim() + "<br />" 
+                        + etest[dblclickLocationIndex].location.trim() + "<br />" 
+                        + etest[dblclickLocationIndex].date.trim() 
+                        + "<br />expected number of beers: " + etest[dblclickLocationIndex].weighting + "<br />";
+
+
+      etest[dblclickLocationIndex].marker0 = createInfoMarkers( etest[dblclickLocationIndex].point,
+                                              etest[dblclickLocationIndex].infoString, 0);
+      etest[dblclickLocationIndex].marker1 = createInfoMarkers( etest[dblclickLocationIndex].point,
+                                              etest[dblclickLocationIndex].infoString, 1);
+      etest[dblclickLocationIndex].marker2 = createInfoMarkers( etest[dblclickLocationIndex].point,
+                                              etest[dblclickLocationIndex].infoString, 2);
+      etest[dblclickLocationIndex].marker3 = createInfoMarkers( etest[dblclickLocationIndex].point,
+                                              etest[dblclickLocationIndex].infoString, 3);
+      etest[dblclickLocationIndex].marker4 = createInfoMarkers( etest[dblclickLocationIndex].point,
+                                              etest[dblclickLocationIndex].infoString, 4);
+       
+      map.addOverlay( etest[dblclickLocationIndex].marker0 );
+      map.addOverlay( etest[dblclickLocationIndex].marker1 );
+      map.addOverlay( etest[dblclickLocationIndex].marker2 );
+      map.addOverlay( etest[dblclickLocationIndex].marker3 );
+      map.addOverlay( etest[dblclickLocationIndex].marker4 );
+
+      if ( rB == 1) {
+         if ( etest[dblclickLocationIndex].byPass == "no") 
+            writeLine("By pass " + etest[dblclickLocationIndex].location + " now.");
+
+         etest[dblclickLocationIndex].byPass = "yes";
+
+         etest[dblclickLocationIndex].marker0.show();
+         etest[dblclickLocationIndex].marker1.hide();
+         etest[dblclickLocationIndex].marker2.hide();
+         etest[dblclickLocationIndex].marker3.hide();
+         etest[dblclickLocationIndex].marker4.hide();
+         }
+        else  {
+         if ( etest[dblclickLocationIndex].byPass == "yes") 
+            writeLine("DO NOT bypass " + etest[dblclickLocationIndex].location + " now.");
+
+         etest[dblclickLocationIndex].byPass = "no";
+         etest[dblclickLocationIndex].marker0.show();
+         etest[dblclickLocationIndex].marker1.hide();
+         etest[dblclickLocationIndex].marker2.hide();
+         etest[dblclickLocationIndex].marker3.hide();
+         etest[dblclickLocationIndex].marker4.hide();
+         }
+      }
+
+   return;
+   }
+
+
+function changeParameters( fudgeFact, mpg, costofGas, maxD) {
+
+
+   writeLine("Change Parameters:");
+   writeLine("new fudgeFact = " + fudgeFact);
+   fudgeFactor = parseFloat(fudgeFact);
+   milesPerGallon = mpg;
+   writeLine("new milesPerGallon = " + milesPerGallon );
+
+   costPerGallonOfGasoline = parseFloat( costofGas);
+   writeLine("new costPerGallonOfGasoline = " + costPerGallonOfGasoline );
+
+   writeLine("old maxHoursDrivingPerDay = " + maxHoursDrivingPerDay);
+   maxHoursDrivingPerDay = parseFloat( maxD);
+   writeLine("new maxHoursDrivingPerDay = " + maxHoursDrivingPerDay);
+   maxDrivingRate = 1609.344*(60.0*maxHoursDrivingPerDay);
+   }
+
+
+function findAnotherOptimalRoute(fromAddress, toAddress, sday, eday) {
+   var elen;
+   var eTempDate;
+   var sTempDate;
+
+   writeLine("Start Optimal Route Search:\n");
+   writeLine("From " + fromAddress + ", starting on " + sday + ", ");
+   writeLine("ending on " + eday  + " in " + toAddress + ".\n");
+
+   sTempDate = new Date(sday);
+   eTempDate = new Date(eday);
+
+   if ( isNaN(sTempDate.valueOf())  ) {
+       writeLine( sday + " is not a correct Date.");
+           return;
+           }
+   if ( isNaN(eTempDate.valueOf())  ) {
+           writeLine( eday + " is not a correct Date.");
+           return;
+           }
+
+   delete H;
+   delete S;
+
+   if ( startLocMark != undefined) {
+      if ( startLocMark.startMarker != undefined)  
+         startLocMark.startMarker.remove();
+      delete startLocMark;
+      }
+
+   if ( endLocMark != undefined ) {
+      if ( endLocMark.endMarker != undefined)
+         endLocMark.endMarker.remove();
+      delete endLocMark;
+      }
+
+   for (var i = 0; i < eventLocations.length; i++ ) delete e[i];
+
+   eventLocations.splice(0, eventLocations.length);
+   eventDates.splice( 0, eventDates.length);
+   eventName.splice( 0, eventName.length);
+   eventWeighting.splice(0, eventWeighting.length);
+   eventOrigDataIndexLoc.splice(0, eventOrigDataIndexLoc.length);
+
+   startLocation = fromAddress;
+   homeLocation = toAddress;
+
+   startLocation = startLocation.trim();
+   homeLocation = homeLocation.trim();
+
+   startLocation = startLocation.toLowerCase(); // make input conform as much as possible to internal 
+   homeLocation = homeLocation.toLowerCase();
+
+   startDate = sday;
+   homeDate = eday;
+
+   writeLine("************** Begin initializeMatrixes **************");
+   
+   /// Need to check Distance Matrix to determine new distances from start and home
+
+   buildInitialEventList();
+   initializeMatrixes();
+
+   // This function starts the update of the Distance Matrix data, but does not 
+   // return here, so it must be the last function here.
+
+   updateDistanceMatrix();
+ }
+
+function initializeMarkerStatus() {
+  var beginDate;
+  var endDate;
+  var eventDate;
+
+  beginDate = new Date( startDate);
+  endDate = new Date( homeDate);
+
+  for ( var i = 0; i < etest.length; i++) {
+      etest[i].status = 2;
+      eventDate = new Date( etest[i].date.trim() );
+      if ( eventDate < beginDate) 
+         etest[i].status = 3;
+       else
+         if ( eventDate > endDate ) 
+            etest[i].status = 3;
+      }
+   }
+
+
+var foundOneToCalculate = false;
+var doneCalculatingMatrix  = false;
+
+function updateDistanceMatrix() {
+   writeLine("***** Begin Updating Distance Tables with new Locations and distances *****" );
+
+   toLocIndex = 0;
+   fromLocIndex = 0;
+   routeShown = false;
+   foundOneToCalculate = false;
+   doneCalculatingMatrix  = false;
+
+   mySetDirections();
+   }
+
+// Copying route from returned Google Map API to
+// my own arrays for possible future modificatons
+
+function extractOptimalRoute() {
+   var optimalRoute;
+   var lat, lng;
+   var stepJ;
+   var vCount;
+
+   writeLine("extractOptimalRoute:");
+
+   numRoutes = gdir.getNumRoutes();
+   optimalRoute = new Array( numRoutes);
+
+   for ( var i = 0; i < numRoutes; i++ ) {
+       optimalRoute[i] = new Object();
+       optimalRoute[i].route = gdir.getRoute(i);
+       startRoute = optimalRoute[i].route.getStep(0).getLatLng();
+       endRoute = optimalRoute[i].route.getEndLatLng();
+   
+       writeLine("startRoute["+i+"] = " + startRoute.lat() + ", " +startRoute.lng()   );
+       writeLine("end Route["+i+"] = " + endRoute.lat() + ", " + endRoute.lng() );
+       }
+   }
+
+function setStartHomeMarkers() {
+   var optimalRoute;
+   var lat, lng;
+   var stepJ;
+   var vCount;
+
+   writeLine("setStartHomeMarker:");
+
+   numRoutes = gdir.getNumRoutes();
+
+
+   startLocMark = new Object();
+   startLocMark.route = gdir.getRoute(0);
+   startLocMark.startRoute = startLocMark.route.getStep(0).getLatLng();
+
+   startLocMark.startInfoString = "Start:" + "<br />" 
+                        + startLocation.toUpperCase() + "<br />" 
+                        + startDate;
+
+   startLocMark.startMarker = createInfoMarkers( startLocMark.startRoute, startLocMark.startInfoString, 5);
+
+   map.addOverlay( startLocMark.startMarker );
+
+   // writeLine("startRoute = " + startLocMark.startRoute.lat() + ", " + startLocMark.startRoute.lng() );
+   
+   endLocMark = new Object();
+   endLocMark.route = gdir.getRoute(numRoutes-1);
+   endLocMark.endRoute = endLocMark.route.getEndLatLng();
+
+   // writeLine("endLocMark = " + endLocMark.endRoute.lat() + ", " + endLocMark.endRoute.lng() );
+   
+   endLocMark.endInfoString = "Home:" + "<br />" 
+                        + homeLocation.toUpperCase() + "<br />" 
+                        + homeDate;
+
+   endLocMark.endMarker = createInfoMarkers( endLocMark.endRoute, endLocMark.endInfoString, 6);
+
+   map.addOverlay( endLocMark.endMarker );
+   }
+
+function routePlay() {
+  var numRoutes;
+  var numGeoCodes;
+  var route1;
+  var step1;
+  var index1;
+  var distance1;
+  var latlng1;
+  var polyLine;
+  var vCount;
+  var colors = ['#FF0000', '#FF00FF', '#0000FF']; 
+  var numSteps;
+  var stepJ;
+  var polyPoints = new Array();
+
+  /*
+  numRoutes =  gdir.getNumRoutes();
+  writeLine("Number of routes is " + numRoutes);
+
+  for ( var i = 0; i < numRoutes; i++ ) {
+      route1= gdir.getRoute(i);
+      numSteps = route1.getNumSteps();
+      writeLine("route[" + i + "] has " + numSteps + " steps.");
+
+      for ( var j = 0; j < numSteps; j++) {
+           stepJ = route1.getStep(j);
+           vCount = stepJ.getPolylineIndex();
+           writeLine("route[" + i + "] has Step[" +j + "] starts at "+ vCount +".");
+           }
+      }
+   */
+
+  //step1 = route1.getStep(0);
+
+  ///index1 = step1.getPolylineIndex();
+
+  // writeLine("index1 = " + index1);
+
+  // distance1 = step1.getDistance().meters;
+  // writeLine("Step1 distance = " + distance1);
+  // latlng1 = step1.getLatLng();
+
+  // writeLine("Lat = " + latlng1.lat());
+  // writeLine("Lng = " + latlng1.lng());
+
+
+  polyLine = gdir.getPolyline();
+
+  polyLine.setStrokeStyle( {color:colors[2],weight:20,opacity:0.2} ); 
+  map.addOverlay( polyLine);
+
+
+  vCount = polyLine.getVertexCount();
+  //writeLine("vCount = " + vCount);
+  
+  for ( var i = 0; i < vCount; i++ ) {
+      polyPoints.splice( i, 0, polyLine.getVertex(i) );
+      }
+
+  //writeLine("polyPoint.length = " + polyPoints.length);
+
+  setStartHomeMarkers();
+  }
+
+
+function onGDirectionsLoad()  { 
+  var dist;
+  var status2
+  var routeMarker;
+  
+  status2 = gdir.getStatus().code;
+  dist = gdir.getDistance().meters;
+  var geoNum, numGeoCodes;
+  
+  if ( routeShown ) {
+
+     dist = gdir.getDistance().meters;
+     geoNum =  gdir.getNumRoutes();
+     numGeoCodes = gdir.getNumGeocodes();
+     
+     routePlay();
+
+     for ( var i = 0; i < numGeoCodes; i++)
+          gdir.getMarker(i).setLatLng( new GLatLng( 0.0, 0.0) );
+
+     redrawEventMarkers();
+     return;
+     }
+
+   distanceMatrix[toLocIndex][fromLocIndex] = dist;
+   if ( distanceMatrix[fromLocIndex][toLocIndex] == -2)  /* make the distance matrix "mirrored" */
+      distanceMatrix[fromLocIndex][toLocIndex] = dist;
+
+   foundOneToCalculate = false;
+   while ( !foundOneToCalculate && !doneCalculatingMatrix  ) {
+       fromLocIndex++;
+       if ( fromLocIndex >= distanceMatrix.length ) {
+          fromLocIndex = 0;
+          toLocIndex++;
+
+          if ( toLocIndex >= distanceMatrix.length ) {
+             printDistanceMatrix();  /* if toLocIndex >= eventLocations.length , then we've finished reviewing matrix */
+             doneCalculatingMatrix = true;
+             }
+          }
+
+      if (!doneCalculatingMatrix)
+         if ( distanceMatrix[toLocIndex][fromLocIndex] == -2.0) /* check to see if the matrix element needs calculation */
+            if ( toLocIndex == fromLocIndex)
+               distanceMatrix[toLocIndex][fromLocIndex] = 0.0; /* if to and from location are the same, 
+                                                                  distance is zero, so expensive 
+                                                                  call to GoogleMaps
+                                                                  is not required */
+            else
+               foundOneToCalculate = true;
+      }
+
+   if ( foundOneToCalculate ) {
+
+       newData = true;
+       printNewData = true;
+       mySetDirections();
+       }
+    else {
+      writeMessage("NO MORE DISTANCES TO DETERMINE\n");
+ 
+     // These functions needs a completely updated Distance Matrix ... 
+
+      initializeMarkerStatus();
+      checkEventDates();
+      deleteEventsOutsideStartEndDate();
+      setHome();
+      setStart();
+      constructEventObjectList();
+      determineOptimalRoute();
+      listOptimalRoute();
+      // dumpAllEvents();
+      markOptimalRouteStatus();
+      listAnyNotSetOrTouched();
+      writeMatrix("\n", 'P');
+      displayOptimalRoute();
+      }
+   } 
+
+
+var printDistanceMessage = "\n";
+
+function writeMatrix( message, type) {
+     if ( type == 'P') {
+        temp  = document.getElementById("Distmatrix").innerHTML;
+        document.getElementById("Distmatrix").innerHTML = temp + printDistanceMessage + message; 
+        }
+     else 
+        printDistanceMessage = printDistanceMessage  + message;
+     }
+
+
+var numGeocoded = 0;
+var eName;
+
+function geocodeAll() {
+   if ( numGeocoded < etest.length)
+      geocoder.getLocations( etest[numGeocoded].location, addressResolved);
+   }
+
+
+// Create the marker and corresponding information window
+
+function createInfoMarkers( point, address, k) {
+
+   var iconS = new GIcon(); 
+
+   iconS.shadow = 'http://labs.google.com/ridefinder/images/mm_20_shadow.png';
+   iconS.iconSize = new GSize(12, 20);
+   iconS.shadowSize = new GSize(22, 20);
+   iconS.iconAnchor = new GPoint(6, 20);
+   iconS.infoWindowAnchor = new GPoint(5, 1);
+
+   if ( k == 0) 
+      iconS.image = 'http://labs.google.com/ridefinder/images/mm_20_brown.png';
+   if ( k == 1)
+      iconS.image = 'http://labs.google.com/ridefinder/images/mm_20_green.png';
+   if ( k == 2) 
+      iconS.image = 'http://labs.google.com/ridefinder/images/mm_20_red.png';
+   if ( k == 3) 
+      iconS.image = 'http://labs.google.com/ridefinder/images/mm_20_gray.png';
+   if ( k == 4) 
+      iconS.image = 'http://labs.google.com/ridefinder/images/mm_20_blue.png';
+   if ( k == 5)
+      iconS.image = 'http://labs.google.com/ridefinder/images/mm_20_white.png';
+   if ( k == 6)
+      iconS.image = 'http://labs.google.com/ridefinder/images/mm_20_black.png';
+
+   var options = { 
+        icon: iconS
+        };
+
+   var marker = new GMarker( point, options );
+
+   GEvent.addListener( marker, "click",
+      function() {
+         marker.openInfoWindowHtml( address); 
+
+           for ( var i = 0; i < etest.length; i++ )
+             if ( etest[i].marker0 != undefined )
+                if (    (etest[i].marker0 == marker)  
+                     || (etest[i].marker1 == marker)
+                     || (etest[i].marker2 == marker) 
+                     || (etest[i].marker3 == marker)  
+                     || (etest[i].marker4 == marker) ) {
+                    dblclickLocationIndex = i;
+                    document.cevform.eventNumber.value = etest[i].name.trim();
+                    document.cevform.we.value = etest[i].weighting;
+                    document.cevform.loc.value = etest[i].location.toUpperCase().trim();
+                    document.cevform.date.value = etest[i].date.trim();
+
+                    if ( etest[i].byPass == "yes") {
+                        document.cevform.radioButton[1].checked = false;
+
+                        document.cevform.radioButton[1].checked = true;
+                        }
+                      else {
+                        document.cevform.radioButton[0].checked = true;
+                        document.cevform.radioButton[1].checked = false;
+                        }
+                   }
+         }
+      );
+
+  return marker;
+}
+
+
+function addressResolved( response) {
+     var delay = 0;
+     var distMatIndex;
+     var gotOne;
+    
+     // writeLine("addressResolved: ");
+
+     if ( response.Status.code == 620) {
+       // Too fast, try again, with a small pause
+       delay = 500;
+       } 
+     else
+       if ( response.Status.code == 200) {
+
+         // Success; do something with the address.
+
+         place = response.Placemark[0];
+
+         etest[numGeocoded].point = new GLatLng( place.Point.coordinates[1], place.Point.coordinates[0]);
+         etest[numGeocoded].lat = etest[numGeocoded].point.lat();
+         etest[numGeocoded].lng = etest[numGeocoded].point.lng();
+
+
+         distMatIndex= findDistanceMatrixIndex( etest[numGeocoded].location.trim().toLowerCase() );
+         if ( distMatIndex == -99) {
+            writeLine("Error addressResolved:findDistanceMatrixIndex: distIndexLoc " + distMatIndex + " not found");
+            }
+          else {
+            if ( distanceMatrixLocationList[distMatIndex].lat == undefined ) {
+               distanceMatrixLocationList[distMatIndex].lat = etest[numGeocoded].lat;
+               distanceMatrixLocationList[distMatIndex].lng = etest[numGeocoded].lng;
+               writeLine("New lat/lng: " + etest[numGeocoded].lat +"/" +  etest[numGeocoded].lng);
+               }
+            }
+
+         gotOne = true;
+         while ( gotOne ) {
+            etest[numGeocoded].infoString = etest[numGeocoded].name.trim() + "<br />" 
+                        + etest[numGeocoded].location.trim() + "<br />" 
+                        + etest[numGeocoded].date.trim() 
+                        + "<br />expected number of beers: " + etest[numGeocoded].weighting;
+
+            etest[numGeocoded].marker0 = createInfoMarkers( etest[numGeocoded].point,
+                                              etest[numGeocoded].infoString, 0);
+            etest[numGeocoded].marker1 = createInfoMarkers( etest[numGeocoded].point,
+                                              etest[numGeocoded].infoString, 1);
+            etest[numGeocoded].marker2 = createInfoMarkers( etest[numGeocoded].point,
+                                              etest[numGeocoded].infoString, 2);
+            etest[numGeocoded].marker3 = createInfoMarkers( etest[numGeocoded].point,
+                                              etest[numGeocoded].infoString, 3);
+            etest[numGeocoded].marker4 = createInfoMarkers( etest[numGeocoded].point,
+                                              etest[numGeocoded].infoString, 4);
+
+            map.addOverlay( etest[numGeocoded].marker0 );
+            map.addOverlay( etest[numGeocoded].marker1 );
+            map.addOverlay( etest[numGeocoded].marker2 );
+            map.addOverlay( etest[numGeocoded].marker3 );
+            map.addOverlay( etest[numGeocoded].marker4 );
+
+           // Move onto the next address; this skips bad addresses, too.
+
+           numGeocoded += 1;
+           if ( numGeocoded >= etest.length ) break;
+
+           distMatIndex = findDistanceMatrixIndex( etest[numGeocoded].location.toLowerCase().trim() );
+           if (distMatIndex == -99) {
+               gotOne = false;  // if unknown location, then it won't have a point
+               printNewData = true;
+               }
+              else { 
+                // writeLine("AR: etest["+numGeocoded+"].location: " + etest[numGeocoded].location+ " is locationed");
+                if ( distanceMatrixLocationList[distMatIndex].lat == undefined ) {
+                    gotOne = false;  // if point for locaiton is undefine, we need to look it up
+                    printNewData = true;
+                    }
+                   else 
+                      etest[numGeocoded].point = new GLatLng( distanceMatrixLocationList[distMatIndex].lat,
+                                                              distanceMatrixLocationList[distMatIndex].lng);
+                  
+                 }
+            }
+         }
+     
+     // once we've located a location without a point yet, we can call the look-up:
+
+     window.setTimeout( geocodeAll, delay);
+   }
+
+
+function radioButtonChecker() {
+
+   var radioChoice = false;
+
+   for (var counter = 0; counter < document.cevform.radioButton.length; counter++) {
+       if ( document.cevform.radioButton[counter].checked ) {
+           break;
+           }
+       }
+   
+   if ( counter < document.cevform.radioButton.length) 
+     return (counter);
+ 
+  return( -99);
+}
+
+
+</script>
+
+
+  </head>
+
+  <body onload="initialize()" onunload="GUnload()">
+  
+  <h2>The Optimator, by John S. Watson, BJCP Grand Master II</h2>
+  
+<form name="myform" onsubmit="findAnotherOptimalRoute( this.from.value, this.to.value, this.sd.value, this.ed.value); return false">
+
+  <table>
+
+   <tr><th align="right">Start: City, State:&nbsp;</th>
+   <td><input type="text" size="25" id="fromAddress" name="from"
+     value="Antioch, CA"/></td>
+
+   <th align="right">&nbsp;&nbsp;End: City, State:&nbsp;</th>
+   <td align="right"><input type="text" size="25" id="toAddress" name="to"
+     value="Antioch, CA" /></td></tr>
+
+   <tr><th align="right">Start Date (MM/DD/YYYY):&nbsp;</th>
+   <td><input type="text" size="25" id="startDay" name="sd"/></td>
+
+   <th align="right">&nbsp;&nbsp;End Date (MM/DD/YYYY):&nbsp;</th>
+   <td align="right"><input type="text" size="25" id="endDay" name="ed"/></td></tr>
+
+
+    <input name="submit" type="submit" value="Get Directions!" />
+   </td></tr>
+   </table>
+
+
+  </form>
+
+  <form onsubmit="changeParameters( this.ff.value, this.mpg.value, this.pog.value, this.hpd.value); return false">
+
+    <table>
+
+     <tr><th align="right">Fudge Factor:&nbsp;</th>
+     <td><input type="text" size="25" id="fromAddress" name="ff"
+     value="1.0"/></td>
+
+   <th align="right">&nbsp;&nbsp;Your MPG:&nbsp;</th>
+   <td align="right"><input type="text" size="25" id="toAddress" name="mpg"
+     value="25.0" /></td></tr>
+
+   <tr><th align="right">Price of Gas ($):&nbsp;</th>
+   <td><input type="text" size="25" id="startDay" name="pog"
+     value="3.75"/></td>
+
+      <th align="right">&nbsp;&nbsp;Max. Hours per Day Driving:&nbsp;</th> 
+      <td align="right"><input type="text" size="25" id="endDay" name="hpd"
+            value="8.0" /></td></tr>
+
+
+       <input name="submit" type="submit" value="Change Parameters!" />
+      </td></tr>
+      </table>
+
+    </form>
+
+<form name="cevform" onsubmit="changeEventValues( this.eventNumber.value, this.we.value, this.loc.value, this.date.value, this.radioButton.value); return false">
+
+    <table>
+
+     <tr><th align="right">Event Name:&nbsp;</th>
+     <td><input type="text" size="25" id="fromAddress" name="eventNumber"
+     value="Click on Markers to upload"/>
+     </td>
+
+     <th align="right">&nbsp;&nbsp;Weight:&nbsp;</th>
+     <td align="right"><input type="text" size="25" id="toAddress" name="we"
+     value="WEIGHTING"
+       /></td></tr>
+
+     <tr><th align="right">&nbsp;&nbsp;Event Location:&nbsp;</th>
+     <td><input type="text" size="25" id="startDay" name="loc"
+     value="event information. Only"
+     /></td>
+
+     <th align="right">&nbsp;&nbsp;Event Date:&nbsp;</th> 
+     <td align="right"><input type="text" size="25" id="endDay" name="date"
+     value="can be changed."
+     /></td></tr>
+
+     <input name="submit" type="submit" value="Change Event's Values!" />
+     <input type="radio" value="Y" name="radioButton">Consider (Yes, I want to attend this event)
+     <input type="radio" value="N" name="radioButton">By Pass (No, alas, I must skip this event)
+     </td></tr>
+
+     </table>
+
+
+    </form>
+
+    <br/>
+
+    <h2>Results:</h2>
+    <div><textarea cols="100" rows="10" name="points" id="getDistance"></textarea></div>
+    <table class="directions">
+
+    <tr><th>Formatted Directions</th><th>Map</th></tr>
+
+    
+    <tr>
+    <td valign="top"><div id="map_canvas" style="width: 800px; height: 800px"></div></td>
+    </tr>
+    <tr>
+    <td valign="top"><div id="directions" style="width: 800px"></div></td>
+    </tr>
+    </table> 
+
+
+    <h4>Updated Matrixes for Next Run: copy and replace in code to avoid having to calculate again</h4>
+    <div><textarea cols="100" rows="10" name="matrixpoints" id="Distmatrix"></textarea></div>
+
+  </body>
+            
+</html>
